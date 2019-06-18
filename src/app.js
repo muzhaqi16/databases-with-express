@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const moment = require('moment');
 const helmet = require('helmet')
 
 const { NODE_ENV } = require('./config')
@@ -26,7 +27,7 @@ app.get('/articles', (req, res, next) => {
                 title: article.title,
                 style: article.style,
                 content: article.content,
-                date_published: new Date(article.date_published),
+                date_published: moment(new Date(article.date_published)).toISOString(true),
             })))
         })
         .catch(next)
@@ -35,12 +36,17 @@ app.get('/articles/:article_id', (req, res, next) => {
     const knexInstance = req.app.get('db')
     ArticlesService.getById(knexInstance, req.params.article_id)
         .then(article => {
+            if (!article) {
+                return res.status(404).json({
+                    error: { message: `Article doesn't exist` }
+                })
+            }
             res.json({
                 id: article.id,
                 title: article.title,
                 style: article.style,
                 content: article.content,
-                date_published: new Date(article.date_published),
+                date_published: moment(new Date(article.date_published)).toISOString(true),
             })
         })
         .catch(next)
